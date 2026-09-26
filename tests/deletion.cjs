@@ -1,0 +1,15 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/../android/assets/app.js','utf8');
+const handler=source.slice(source.indexOf('window.receiveDeletion='),source.indexOf('window.receiveState='));
+let renders=0,position=null,closed=0;
+const context={window:{scrollY:520,scrollTo:(x,y)=>position=y},state:{files:[{id:'ok',size:50},{id:'failed',size:70},{id:'other',size:80}],storage:{available:1}},picked:new Set(['ok','failed']),selected:{id:'ok'},$:()=>({open:true,close:()=>closed++}),render:()=>renders++,requestAnimationFrame:fn=>fn(),page:'browse',app:'Telegram',type:'文件'};
+vm.createContext(context);vm.runInContext(handler,context);
+context.window.receiveDeletion({removed:['ok'],storage:{available:51}});
+assert.deepStrictEqual(Array.from(context.state.files,f=>f.id),['failed','other']);
+assert.equal(context.state.files.reduce((n,f)=>n+f.size,0),150);
+assert.deepStrictEqual(Array.from(context.picked),['failed']);
+assert.equal(context.selected,null);assert.equal(closed,1);assert.equal(position,520);assert.equal(renders,1);assert.equal(context.state.storage.available,51);
+assert.equal(context.page,'browse');assert.equal(context.app,'Telegram');assert.equal(context.type,'文件');
+context.window.receiveDeletion({removed:[]});assert.equal(context.state.files.length,2);
+context.window.receiveDeletion({removed:['ok']});assert.equal(context.state.files.length,2);
+console.log('PASS: deletion delta preserves failed items, totals, selection, scope and scroll; repeated/empty results are harmless');

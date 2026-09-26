@@ -1,0 +1,13 @@
+.DS_Store
+work/
+build/
+*.apk
+*.idsig
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.app/
+*.zip
+.env
+.env.*

@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),I=require('../android/assets/file-intelligence.js');
+const now=1800000000000,day=86400000;
+const files=[{id:'v',name:'海邊_日落.mp4',mime:'video/mp4',app:'Telegram',path:'Telegram / Video',size:200*1048576,date:now-2*day},{id:'i',name:'Screenshot_2026.png',mime:'image/png',app:'相機',path:'Pictures / Screenshots',size:3*1048576,date:now-day},{id:'d',name:'週末行程.pdf',mime:'application/pdf',app:'WhatsApp',path:'Download',size:5000,date:now-90*day}];
+const ids=q=>I.search(files,q,now).files.map(f=>f.id);
+assert.deepEqual(ids('TG 最近7天 影片 大於100MB'),['v']);
+assert.deepEqual(ids('trelefram 视频'),['v']);assert.deepEqual(ids('海邊 日落'),['v']);assert.deepEqual(ids('最近7天 圖片'),['i']);assert.deepEqual(ids('截圖'),['i']);assert.deepEqual(ids('螢幕截圖'),['i']);assert.deepEqual(ids('小於10MB pdf'),['d']);assert.deepEqual(ids('whatsapp 文件'),['d']);assert.deepEqual(ids('未知搜尋詞'),[]);assert.deepEqual(ids('最近7天 pdf'),[]);
+const f=(name,path='Download',size=100)=>({name,path,size,mime:'application/octet-stream'});
+assert.equal(I.explain(f('unknown.dat')).risk,'未知');assert.match(I.explain(f('unknown.dat')).recommendation,/不推薦刪除/);
+assert.equal(I.explain(f('settings.json','cache')).risk,'高');assert.equal(I.explain(f('database.db')).risk,'高');assert.equal(I.explain(f('.nomedia')).risk,'高');assert.match(I.explain(f('backup.zip')).recommendation,/備份/);assert.match(I.explain(f('empty.tmp','Download',0)).recommendation,/不推薦刪除/);assert.match(I.explain(f('video.part')).effect,/續傳/);assert.match(I.explain(f('file.cache')).effect,/離線/);assert.match(I.explain(files[0]).effect,/失去/);
+assert.equal(I.search([f('file.cache','Telegram/cache')],'暫存',now).files.length,1);
+assert.equal(I.search([f('setup.apk')],'安裝包',now).files.length,1);
+assert.equal(I.search([f('notes.txt')],'下載',now).files.length,1);
+console.log('PASS: search aliases, multi-keywords, date/type/size filters, screenshots, formats, empty results and conservative file advice (23 assertions).');

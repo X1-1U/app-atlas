@@ -28,7 +28,7 @@ ANDROID_HOME=/path/to/android-sdk JAVA_HOME=/path/to/jdk17 bash build.sh
 bash desktop-preview/build.sh
 ```
 
-以 Finder 開啟產生的 work/拾檔手機預覽.app。浮動視窗預設靠右置頂，可拖動；⌘R 刷新，⌘T 切換置頂。使用同一份 App 介面，優先載入工作目錄最新檔案；無須啟動網頁伺服器。
+以 Finder 開啟產生的 work/ANDROID模擬.app。浮動視窗預設靠右置頂，可拖動；⌘R 刷新，⌘T 切換置頂。使用同一份 App 介面，優先載入工作目錄最新檔案；無須啟動網頁伺服器。
 
 S26 Ultra 螢幕比例，412 × 893 邏輯尺寸為模擬預設，並非實機密度量測。預覽為示範資料，不能取代 Android 權限、儲存操作或三星相容性實測。
 
@@ -45,3 +45,5 @@ java -cp work/tests SourceRulesTest
 ```
 
 開發時已完成規則測試、預覽操作驗證、APK 建置與簽章驗證；尚未完成全面實機測試。歷史改動與限制見 [CHANGELOG.md](CHANGELOG.md)。
+
+APK 開發時主動開啟 ANDROID模擬，預設靠右懸浮。可用 ⌘H 暫時隱藏。尚無可用的 Codex 對話焦點事件，未實作隨對話切換自動開關，不得宣稱已有此功能。

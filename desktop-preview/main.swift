@@ -9,7 +9,7 @@ final class Preview: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         let height = min(CGFloat(893), screen.height - 64)
         let width = height * 1440 / 3120
         panel = NSPanel(contentRect: NSRect(x:screen.maxX-width-18,y:screen.maxY-height-40,width:width,height:height),styleMask:[.titled,.closable,.miniaturizable],backing:.buffered,defer:false)
-        panel.title = "S26 Ultra · 介面模擬"
+        panel.title = "ANDROID模擬"
         panel.level = .floating
         panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces,.fullScreenAuxiliary]
@@ -23,9 +23,12 @@ final class Preview: NSObject, NSApplicationDelegate, WKNavigationDelegate {
         let refresh=NSMenuItem(title:"重新載入介面",action:#selector(reload),keyEquivalent:"r");refresh.target=self;appMenu.addItem(refresh)
         let float=NSMenuItem(title:"切換置頂",action:#selector(toggleFloat),keyEquivalent:"t");float.target=self;appMenu.addItem(float)
         appMenu.addItem(NSMenuItem(title:"結束預覽",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q"))
+        let hide=NSMenuItem(title:"隱藏 ANDROID模擬",action:#selector(NSApplication.hide(_:)),keyEquivalent:"h");appMenu.addItem(hide)
+        NSApp.applicationIconImage=NSImage(contentsOf:Bundle.main.resourceURL!.appendingPathComponent("AndroidWave.icns"))
         NSApp.mainMenu=menu
         reload();panel.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
     }
+    func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool{panel.makeKeyAndOrderFront(nil);return true}
     @objc func toggleFloat(){panel.level = panel.level == .floating ? .normal : .floating}
     @objc func reload(){
         // Prefer the working UI for development; the bundle remains usable on its own.

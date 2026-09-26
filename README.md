@@ -1,6 +1,8 @@
 # 拾檔 · App Atlas
 
-離線 Android 儲存清理與檔案管理工具。目前版本 **0.7.0**，最低 Android 11，目標 SDK 35。
+離線 Android 儲存清理與檔案管理工具。目前版本 **0.8.0**，最低 Android 11，目標 SDK 35。
+
+手機版透過 Android PackageManager 讀取已安裝 App 自帶圖示，使用本機 128px PNG 與有限記憶體快取。無新增權限；桌面預覽沒有手機安裝資源，保留示意文字。
 
 ## 功能
 
@@ -20,7 +22,7 @@
 ANDROID_HOME=/path/to/android-sdk JAVA_HOME=/path/to/jdk17 bash build.sh
 ```
 
-產物為 app-atlas-v0.7.0.apk。BUILD_DIR、SIGNING_KEY 可設定；預設建立本機開發用測試簽章，不可當成正式發行金鑰。簽章金鑰不入庫；自行建置的不同簽章無法直接覆蓋其他簽章的安裝。
+產物為 app-atlas-v0.8.0.apk。BUILD_DIR、SIGNING_KEY 可設定；預設建立本機開發用測試簽章，不可當成正式發行金鑰。簽章金鑰不入庫；自行建置的不同簽章無法直接覆蓋其他簽章的安裝。
 
 ## 獨立手機預覽（macOS）
 
@@ -38,6 +40,7 @@ S26 Ultra 螢幕比例，412 × 893 邏輯尺寸為模擬預設，並非實機�
 node tests/cleanup.cjs
 node tests/intelligence.cjs
 node tests/deletion.cjs
+node tests/app-icons.cjs
 mkdir -p work/tests
 javac -encoding UTF-8 -d work/tests android/src/local/appatlas/SafePaths.java android/src/local/appatlas/SourceRules.java tests/SafePathsTest.java tests/SourceRulesTest.java
 java -cp work/tests SafePathsTest

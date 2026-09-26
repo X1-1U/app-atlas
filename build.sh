@@ -19,6 +19,6 @@ cp "$BUILD/base.apk" "$BUILD/unsigned.apk"
 if [ ! -f "$KEY" ]; then
  "$JAVA_HOME/bin/keytool" -genkeypair -keystore "$KEY" -storepass android -keypass android -alias app-atlas-test -dname "CN=App Atlas Local Test" -keyalg RSA -keysize 2048 -validity 10000 -noprompt
 fi
-JAVA_HOME="$JAVA_HOME" "$BT/apksigner" sign --ks "$KEY" --ks-pass pass:android --ks-key-alias app-atlas-test --out "$ROOT/app-atlas-v0.7.0.apk" "$BUILD/aligned.apk"
-JAVA_HOME="$JAVA_HOME" "$BT/apksigner" verify --verbose "$ROOT/app-atlas-v0.7.0.apk"
-"$BT/aapt2" dump permissions "$ROOT/app-atlas-v0.7.0.apk"
+JAVA_HOME="$JAVA_HOME" "$BT/apksigner" sign --ks "$KEY" --ks-pass pass:android --ks-key-alias app-atlas-test --out "$ROOT/app-atlas-v0.8.0.apk" "$BUILD/aligned.apk"
+JAVA_HOME="$JAVA_HOME" "$BT/apksigner" verify --verbose "$ROOT/app-atlas-v0.8.0.apk"
+"$BT/aapt2" dump permissions "$ROOT/app-atlas-v0.8.0.apk"

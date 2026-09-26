@@ -1,3 +1,9 @@
+## v0.8 圖示
+
+App 分類、已安裝應用及詳情使用本機套件圖示。精確套件／唯一名稱配對；未知或同名歧義保留文字。離線讀取，無新增權限。圖示採 128px PNG，2MB 記憶體快取，每次掃描更新。7 項配對測試、APK 建置與簽章通過；真實圖示待手機驗證。
+
+官方介面：https://developer.android.com/reference/android/content/pm/PackageManager#getApplicationIcon(java.lang.String)
+
 ## v0.7 更新
 
 - 成功刪除後更新本機索引、容量與列表，不重新掃描；失敗保留。搜尋、分類、排序與捲動位置保留。仍需原生確認永久刪除。

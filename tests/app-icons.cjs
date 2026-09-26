@@ -1,0 +1,12 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/../android/assets/app.js','utf8');
+const scope={state:{installed:[{name:'Telegram',package:'org.telegram.messenger'},{name:'同名',package:'one.app'},{name:'同名',package:'two.app'}],files:[{app:'電報分類',packageName:'org.telegram.messenger'},{app:'已卸載',packageName:'gone.app'}]}};
+vm.createContext(scope);vm.runInContext(source.slice(source.indexOf('function iconPackage('),source.indexOf('function appIcon(')),scope);
+assert.equal(scope.iconPackage('Telegram'), 'org.telegram.messenger');
+assert.equal(scope.iconPackage('同名'),null);
+assert.equal(scope.iconPackage('同名','two.app'),'two.app');
+assert.equal(scope.iconPackage('電報分類'),'org.telegram.messenger');
+assert.equal(scope.iconPackage('已卸載'),null);
+assert.equal(scope.iconPackage('全部'),null);
+assert.equal(scope.iconPackage('Telegram','unknown.app'),null);
+console.log('PASS: installed icons use exact package identity; ambiguous or missing apps retain fallback (7 checks)');

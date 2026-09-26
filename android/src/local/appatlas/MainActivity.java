@@ -25,6 +25,7 @@ public final class MainActivity extends Activity {
     private static final String LOCAL="com.android.externalstorage.documents";
     private WebView web;
     private final android.util.LruCache<String,byte[]> thumbnailCache=new android.util.LruCache<String,byte[]>(8*1024*1024){@Override protected int sizeOf(String key,byte[] data){return data.length;}};
+    private final android.util.LruCache<String,byte[]> appIconCache=new android.util.LruCache<String,byte[]>(2*1024*1024){@Override protected int sizeOf(String key,byte[] data){return data.length;}};
     private final java.util.concurrent.Semaphore thumbnailSlots=new java.util.concurrent.Semaphore(2);
     private final CancellationSignal thumbnailCancel=new CancellationSignal();
     private FrameLayout frame;
@@ -62,6 +63,7 @@ public final class MainActivity extends Activity {
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){return true;}
             @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){
                 String url=request.getUrl().toString();
+                if(url.startsWith(ORIGIN+"app-icon/")){byte[] bytes=applicationIcon(request.getUrl().getLastPathSegment());if(bytes!=null)return new WebResourceResponse("image/png","binary",new ByteArrayInputStream(bytes));return new WebResourceResponse("text/plain","UTF-8",404,"Not Found",java.util.Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));}
                 if(url.startsWith(ORIGIN+"thumb/")){byte[] bytes=thumbnail(request.getUrl().getLastPathSegment());if(bytes!=null)return new WebResourceResponse("image/jpeg","binary",new ByteArrayInputStream(bytes));return new WebResourceResponse("text/plain","UTF-8",404,"Not Found",java.util.Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));}
                 String asset=url.equals(ORIGIN+"index.html")?"index.html":url.equals(ORIGIN+"app.js")?"app.js":url.equals(ORIGIN+"cleanup.js")?"cleanup.js":url.equals(ORIGIN+"file-intelligence.js")?"file-intelligence.js":null;
                 try{if(asset!=null)return new WebResourceResponse(asset.endsWith("js")?"application/javascript":"text/html","UTF-8",getAssets().open(asset));}catch(IOException ignored){}
@@ -226,7 +228,23 @@ public final class MainActivity extends Activity {
     @Override public void onConfigurationChanged(android.content.res.Configuration config){super.onConfigurationChanged(config);applyNativeTheme();js("window.themeChanged("+JSONObject.quote(prefs.getString("theme","system"))+","+systemDark()+")");}
     private void launchSettings(Intent intent){try{returning=true;startActivity(intent);}catch(Exception e){returning=false;toast("系統不支援此入口，請在手機設定內搜尋對應項目。");}}
     @Override protected void onResume(){super.onResume();if(ready&&returning){returning=false;startScan();js("window.refreshAppDetails()");}}
+    private synchronized byte[] applicationIcon(String pkg){
+        if(pkg==null||destroyed||!appNames.containsKey(pkg))return null;
+        byte[] cached=appIconCache.get(pkg);if(cached!=null)return cached;
+        android.graphics.Bitmap bitmap=null;
+        try{
+            android.graphics.drawable.Drawable icon=getPackageManager().getApplicationIcon(pkg);
+            bitmap=android.graphics.Bitmap.createBitmap(128,128,android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas canvas=new android.graphics.Canvas(bitmap);
+            int w=icon.getIntrinsicWidth(),h=icon.getIntrinsicHeight();float scale=128f/Math.max(1,Math.max(w,h));
+            int width=w>0?Math.max(1,Math.round(w*scale)):128,height=h>0?Math.max(1,Math.round(h*scale)):128;
+            icon.setBounds((128-width)/2,(128-height)/2,(128+width)/2,(128+height)/2);icon.draw(canvas);
+            ByteArrayOutputStream output=new ByteArrayOutputStream();bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,output);
+            byte[] bytes=output.toByteArray();if(!destroyed)appIconCache.put(pkg,bytes);return bytes;
+        }catch(Exception e){return null;}finally{if(bitmap!=null)bitmap.recycle();}
+    }
     private void loadInstalled(){
+        appIconCache.evictAll();
         JSONArray result=new JSONArray();appNames.clear();try{List<PackageInfo> list=getPackageManager().getInstalledPackages(0);for(PackageInfo p:list){if(p.applicationInfo==null)continue;ApplicationInfo a=p.applicationInfo;String name=getPackageManager().getApplicationLabel(a).toString();appNames.put(p.packageName,name);JSONObject item=new JSONObject();item.put("package",p.packageName);item.put("name",name);item.put("version",p.versionName==null?"未知":p.versionName);item.put("system",(a.flags&ApplicationInfo.FLAG_SYSTEM)!=0);long bytes=new File(a.sourceDir).length();if(a.splitSourceDirs!=null)for(String path:a.splitSourceDirs)bytes+=new File(path).length();item.put("apkBytes",bytes>0?bytes:-1);result.put(item);}}catch(Exception e){toast("部分應用資訊讀取失敗。");}installed=result;
     }
     public static String mime(String name){int dot=name.lastIndexOf('.');String ext=dot>=0?name.substring(dot+1).toLowerCase(java.util.Locale.ROOT):"";String m=MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);return m==null?"application/octet-stream":m;}
@@ -268,5 +286,5 @@ public final class MainActivity extends Activity {
     }
 
     @Override public void onBackPressed(){js("(()=>{const d=document.querySelector('dialog[open]');if(d)d.close();else if(page==='apps'&&activePackage){activePackage=null;appDetail=null;renderInstalled();}else if(page==='browse'&&browseLevel==='files'){leaveFiles();}else if(page!=='clean'){navigate('clean');}else Android.exit();})()");}
-    @Override protected void onDestroy(){destroyed=true;thumbnailCancel.cancel();thumbnailCache.evictAll();worker.shutdownNow();detailsWorker.shutdownNow();web.removeJavascriptInterface("Android");web.destroy();super.onDestroy();}
+    @Override protected void onDestroy(){destroyed=true;appIconCache.evictAll();thumbnailCancel.cancel();thumbnailCache.evictAll();worker.shutdownNow();detailsWorker.shutdownNow();web.removeJavascriptInterface("Android");web.destroy();super.onDestroy();}
 }

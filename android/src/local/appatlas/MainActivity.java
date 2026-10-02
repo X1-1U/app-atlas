@@ -50,10 +50,10 @@ public final class MainActivity extends Activity {
         String mode=prefs.getString("theme","system");boolean systemDark=(getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;
         boolean dark=mode.equals("dark")||(mode.equals("system")&&systemDark);
         setTheme(dark?android.R.style.Theme_Material_NoActionBar:android.R.style.Theme_Material_Light_NoActionBar);
-        super.onCreate(saved);getWindow().setStatusBarColor(dark?0xff111916:0xfff6f7f9);getWindow().setNavigationBarColor(dark?0xff111916:0xfff6f7f9);
+        super.onCreate(saved);getWindow().setStatusBarColor(dark?0xff10151f:0xfff1f4f9);getWindow().setNavigationBarColor(dark?0xff10151f:0xfff1f4f9);
         getWindow().getDecorView().setSystemUiVisibility(dark?0:View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         if(saved!=null){pendingApp=saved.getString("pendingApp","");uiPage=saved.getString("page","clean");}
-        web=new WebView(this);web.setBackgroundColor(dark?0xff111916:0xfff6f7f9);
+        web=new WebView(this);web.setBackgroundColor(dark?0xff10151f:0xfff1f4f9);
         getWindow().setDecorFitsSystemWindows(false);
         frame=new FrameLayout(this);
         frame.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout()|WindowInsets.Type.ime());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return WindowInsets.CONSUMED;});
@@ -84,6 +84,8 @@ public final class MainActivity extends Activity {
     public final class Bridge {
         @JavascriptInterface public String sourceLayout(){return prefs.getString("sourceLayout","grid");}
         @JavascriptInterface public void setSourceLayout(String mode){if(mode.equals("grid")||mode.equals("list"))prefs.edit().putString("sourceLayout",mode).apply();}
+        @JavascriptInterface public boolean motionEnabled(){return prefs.getBoolean("motion",true);}
+        @JavascriptInterface public void setMotionEnabled(boolean enabled){prefs.edit().putBoolean("motion",enabled).apply();}
         @JavascriptInterface public String theme(){return prefs.getString("theme","system");}
         @JavascriptInterface public boolean systemDark(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;}
         @JavascriptInterface public void ready(){ready=true;scan();}
@@ -224,7 +226,7 @@ public final class MainActivity extends Activity {
     }
     private boolean usageAccess(){AppOpsManager ops=(AppOpsManager)getSystemService(APP_OPS_SERVICE);return ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,android.os.Process.myUid(),getPackageName())==AppOpsManager.MODE_ALLOWED;}
     private boolean systemDark(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;}
-    private void applyNativeTheme(){String mode=prefs.getString("theme","system");boolean dark=mode.equals("dark")||(mode.equals("system")&&systemDark());setTheme(dark?android.R.style.Theme_Material_NoActionBar:android.R.style.Theme_Material_Light_NoActionBar);int color=dark?0xff111916:0xfff6f7f9;frame.setBackgroundColor(color);web.setBackgroundColor(color);getWindow().setStatusBarColor(color);getWindow().setNavigationBarColor(color);getWindow().getDecorView().setSystemUiVisibility(dark?0:View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);}
+    private void applyNativeTheme(){String mode=prefs.getString("theme","system");boolean dark=mode.equals("dark")||(mode.equals("system")&&systemDark());setTheme(dark?android.R.style.Theme_Material_NoActionBar:android.R.style.Theme_Material_Light_NoActionBar);int color=dark?0xff10151f:0xfff1f4f9;frame.setBackgroundColor(color);web.setBackgroundColor(color);getWindow().setStatusBarColor(color);getWindow().setNavigationBarColor(color);getWindow().getDecorView().setSystemUiVisibility(dark?0:View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);}
     @Override public void onConfigurationChanged(android.content.res.Configuration config){super.onConfigurationChanged(config);applyNativeTheme();js("window.themeChanged("+JSONObject.quote(prefs.getString("theme","system"))+","+systemDark()+")");}
     private void launchSettings(Intent intent){try{returning=true;startActivity(intent);}catch(Exception e){returning=false;toast("系統不支援此入口，請在手機設定內搜尋對應項目。");}}
     @Override protected void onResume(){super.onResume();if(ready&&returning){returning=false;startScan();js("window.refreshAppDetails()");}}

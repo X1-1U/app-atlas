@@ -1,6 +1,6 @@
 # 拾檔 · App Atlas
 
-離線 Android 儲存清理與檔案管理工具。目前版本 **0.8.0**，最低 Android 11，目標 SDK 35。
+離線 Android 儲存清理與檔案管理工具。目前版本 **0.9.0**，最低 Android 11，目標 SDK 35。
 
 手機版透過 Android PackageManager 讀取已安裝 App 自帶圖示，使用本機 128px PNG 與有限記憶體快取。無新增權限；桌面預覽沒有手機安裝資源，保留示意文字。
 
@@ -22,17 +22,13 @@
 ANDROID_HOME=/path/to/android-sdk JAVA_HOME=/path/to/jdk17 bash build.sh
 ```
 
-產物為 app-atlas-v0.8.0.apk。BUILD_DIR、SIGNING_KEY 可設定；預設建立本機開發用測試簽章，不可當成正式發行金鑰。簽章金鑰不入庫；自行建置的不同簽章無法直接覆蓋其他簽章的安裝。
+產物為 app-atlas-v0.9.0.apk。BUILD_DIR、SIGNING_KEY 可設定；預設建立本機開發用測試簽章，不可當成正式發行金鑰。簽章金鑰不入庫；自行建置的不同簽章無法直接覆蓋其他簽章的安裝。
 
-## 獨立手機預覽（macOS）
+## 介面預覽
 
-```sh
-bash desktop-preview/build.sh
-```
+開發使用聊天內「App 預覽台」，每個專案顯示自己的介面。先預覽，確認後才建置 APK。不再啟動或重建舊版獨立 macOS 預覽或 LaunchAgent；desktop-preview 僅保留歷史原始碼。
 
-以 Finder 開啟產生的 work/ANDROID模擬.app。浮動視窗預設靠右置頂，可拖動；⌘R 刷新，⌘T 切換置頂。使用同一份 App 介面，優先載入工作目錄最新檔案；無須啟動網頁伺服器。
-
-S26 Ultra 螢幕比例，412 × 893 邏輯尺寸為模擬預設，並非實機密度量測。預覽為示範資料，不能取代 Android 權限、儲存操作或三星相容性實測。
+預覽使用示範資料，不能取代 Android 系統權限、檔案存取和三星實機驗證。
 
 ## 測試
 
@@ -48,5 +44,3 @@ java -cp work/tests SourceRulesTest
 ```
 
 開發時已完成規則測試、預覽操作驗證、APK 建置與簽章驗證；尚未完成全面實機測試。歷史改動與限制見 [CHANGELOG.md](CHANGELOG.md)。
-
-APK 開發時主動開啟 ANDROID模擬，預設靠右懸浮。可用 ⌘H 暫時隱藏。尚無可用的 Codex 對話焦點事件，未實作隨對話切換自動開關，不得宣稱已有此功能。

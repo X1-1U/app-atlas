@@ -5,8 +5,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 BUILD="${BUILD_DIR:-$ROOT/../../work/build}"
 KEY="${SIGNING_KEY:-$ROOT/../../work/app-atlas-test.jks}"
-BT="$ANDROID_HOME/build-tools/34.0.0"
-JAR="$ANDROID_HOME/platforms/android-35/android.jar"
+VERSION="$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' "$ROOT/android/AndroidManifest.xml")"
+APK="$ROOT/app-atlas-v$VERSION.apk"
+BT="$ANDROID_HOME/build-tools/${BUILD_TOOLS_VERSION:-34.0.0}"
+JAR="$ANDROID_HOME/platforms/${ANDROID_PLATFORM:-android-35}/android.jar"
 mkdir -p "$BUILD/classes" "$BUILD/dex" "$BUILD/gen"
 "$BT/aapt2" compile --dir "$ROOT/android/res" -o "$BUILD/resources.zip"
 "$BT/aapt2" link -o "$BUILD/base.apk" -I "$JAR" --manifest "$ROOT/android/AndroidManifest.xml" -A "$ROOT/android/assets" --java "$BUILD/gen" "$BUILD/resources.zip"
@@ -19,6 +21,6 @@ cp "$BUILD/base.apk" "$BUILD/unsigned.apk"
 if [ ! -f "$KEY" ]; then
  "$JAVA_HOME/bin/keytool" -genkeypair -keystore "$KEY" -storepass android -keypass android -alias app-atlas-test -dname "CN=App Atlas Local Test" -keyalg RSA -keysize 2048 -validity 10000 -noprompt
 fi
-JAVA_HOME="$JAVA_HOME" "$BT/apksigner" sign --ks "$KEY" --ks-pass pass:android --ks-key-alias app-atlas-test --out "$ROOT/app-atlas-v0.9.0.apk" "$BUILD/aligned.apk"
-JAVA_HOME="$JAVA_HOME" "$BT/apksigner" verify --verbose "$ROOT/app-atlas-v0.9.0.apk"
-"$BT/aapt2" dump permissions "$ROOT/app-atlas-v0.9.0.apk"
+JAVA_HOME="$JAVA_HOME" "$BT/apksigner" sign --ks "$KEY" --ks-pass pass:android --ks-key-alias app-atlas-test --out "$APK" "$BUILD/aligned.apk"
+JAVA_HOME="$JAVA_HOME" "$BT/apksigner" verify --verbose "$APK"
+"$BT/aapt2" dump permissions "$APK"

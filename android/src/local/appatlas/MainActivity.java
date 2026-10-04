@@ -19,10 +19,12 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Offline, user-selected local document trees only. No broad storage permission. */
+/** Offline WebView shell. Scans shared storage (all-files access) or user-selected document trees; never opens a network connection itself. */
 public final class MainActivity extends Activity {
     private static final String ORIGIN="https://appassets.androidplatform.net/";
     private static final String LOCAL="com.android.externalstorage.documents";
+    /** Opened in the user's browser; the app itself holds no INTERNET permission. */
+    private static final String UPDATE_URL="https://github.com/X1-1U/app-atlas/releases/latest";
     private WebView web;
     private final android.util.LruCache<String,byte[]> thumbnailCache=new android.util.LruCache<String,byte[]>(8*1024*1024){@Override protected int sizeOf(String key,byte[] data){return data.length;}};
     private final android.util.LruCache<String,byte[]> appIconCache=new android.util.LruCache<String,byte[]>(2*1024*1024){@Override protected int sizeOf(String key,byte[] data){return data.length;}};
@@ -86,6 +88,8 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void setSourceLayout(String mode){if(mode.equals("grid")||mode.equals("list"))prefs.edit().putString("sourceLayout",mode).apply();}
         @JavascriptInterface public boolean motionEnabled(){return prefs.getBoolean("motion",true);}
         @JavascriptInterface public void setMotionEnabled(boolean enabled){prefs.edit().putBoolean("motion",enabled).apply();}
+        @JavascriptInterface public String version(){try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(Exception e){return "";}}
+        @JavascriptInterface public void openUpdate(){runOnUiThread(()->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(UPDATE_URL)).addCategory(Intent.CATEGORY_BROWSABLE));}catch(Exception e){toast("找不到瀏覽器，請手動開啟 github.com/X1-1U/app-atlas/releases");}});}
         @JavascriptInterface public String theme(){return prefs.getString("theme","system");}
         @JavascriptInterface public boolean systemDark(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;}
         @JavascriptInterface public void ready(){ready=true;scan();}
@@ -272,7 +276,7 @@ public final class MainActivity extends Activity {
                 try{JSONObject f=new JSONObject();String id=UUID.randomUUID().toString(),relative=sharedRoot().toPath().relativize(file.getParentFile().toPath()).toString();f.put("id",id);f.put("raw",file.getAbsolutePath());f.put("name",file.getName());f.put("path",relative.isEmpty()?"共用儲存空間":relative);f.put("mime",mime(file.getName()));f.put("size",file.length());f.put("date",file.lastModified());f.put("deletable",file.canWrite());assignApp(f,relative);result.put(f);files.put(id,f);}catch(Exception ignored){}
             }
             if(limited)break;
-            if(System.currentTimeMillis()-last>1500){last=System.currentTimeMillis();send(result,new JSONArray(),true,false);}
+            if(System.currentTimeMillis()-last>1500+result.length()/5){last=System.currentTimeMillis();send(result,new JSONArray(),true,false);}
         }
         if(denied>0)errors.put(denied+" 個目錄無法讀取，結果不包含這些內容。");if(limited)errors.put("已達 50,000 個檔案或 100,000 個項目上限，目前為部分結果。");return limited;
     }

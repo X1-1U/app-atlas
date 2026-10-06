@@ -19,12 +19,14 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Offline WebView shell. Scans shared storage (all-files access) or user-selected document trees; never opens a network connection itself. */
+/** WebView shell with network loads blocked. Scans shared storage (all-files access) or user-selected document trees; the only network use is the user-started version lookup in checkUpdate(). */
 public final class MainActivity extends Activity {
     private static final String ORIGIN="https://appassets.androidplatform.net/";
     private static final String LOCAL="com.android.externalstorage.documents";
-    /** Opened in the user's browser; the app itself holds no INTERNET permission. */
+    /** Release page, opened in the user's browser. */
     private static final String UPDATE_URL="https://github.com/X1-1U/app-atlas/releases/latest";
+    /** The one URL this app ever requests, and only when the user taps "check for updates". */
+    private static final String UPDATE_API="https://api.github.com/repos/X1-1U/app-atlas/releases/latest";
     private WebView web;
     private final android.util.LruCache<String,byte[]> thumbnailCache=new android.util.LruCache<String,byte[]>(8*1024*1024){@Override protected int sizeOf(String key,byte[] data){return data.length;}};
     private final android.util.LruCache<String,byte[]> appIconCache=new android.util.LruCache<String,byte[]>(2*1024*1024){@Override protected int sizeOf(String key,byte[] data){return data.length;}};
@@ -90,6 +92,15 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void setMotionEnabled(boolean enabled){prefs.edit().putBoolean("motion",enabled).apply();}
         @JavascriptInterface public String version(){try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(Exception e){return "";}}
         @JavascriptInterface public void openUpdate(){runOnUiThread(()->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(UPDATE_URL)).addCategory(Intent.CATEGORY_BROWSABLE));}catch(Exception e){toast("找不到瀏覽器，請手動開啟 github.com/X1-1U/app-atlas/releases");}});}
+        @JavascriptInterface public void checkUpdate(){detailsWorker.execute(()->{
+            String tag="";
+            try{java.net.HttpURLConnection c=(java.net.HttpURLConnection)new java.net.URL(UPDATE_API).openConnection();c.setConnectTimeout(8000);c.setReadTimeout(8000);c.setInstanceFollowRedirects(false);c.setUseCaches(false);c.setRequestProperty("Accept","application/vnd.github+json");c.setRequestProperty("User-Agent","app-atlas");
+                try{if(c.getResponseCode()==200){ByteArrayOutputStream out=new ByteArrayOutputStream();try(InputStream in=c.getInputStream()){byte[] buffer=new byte[8192];int n;while((n=in.read(buffer))>0&&out.size()<1048576)out.write(buffer,0,n);}tag=new JSONObject(out.toString("UTF-8")).optString("tag_name","");}}finally{c.disconnect();}
+            }catch(Exception ignored){}
+            // Only a plain version tag reaches the page; anything else is reported as a failed check.
+            if(!tag.matches("v?\\d+(\\.\\d+){0,3}"))tag="";
+            js("window.receiveUpdate("+JSONObject.quote(tag)+")");
+        });}
         @JavascriptInterface public String theme(){return prefs.getString("theme","system");}
         @JavascriptInterface public boolean systemDark(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;}
         @JavascriptInterface public void ready(){ready=true;scan();}
